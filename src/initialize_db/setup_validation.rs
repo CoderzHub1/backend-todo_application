@@ -12,7 +12,7 @@ use crate::user::add_user::User;
 //     }
 // }
 
-pub async fn get_user_coll(db: Database)-> mongodb::error::Result<Collection<User>>{
+pub async fn get_users_coll(db: Database)-> mongodb::error::Result<Collection<User>>{
 
         let keys = doc! {
             "email": 1
