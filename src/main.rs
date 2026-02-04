@@ -11,6 +11,7 @@ async fn main(){
         users_coll,
         tasks_db
     };
+
     let app = Router::new()
     .route("/get-user", routing::get(get_user))
     .route("/create-user", routing::post(create_user))
