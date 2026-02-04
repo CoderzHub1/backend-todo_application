@@ -14,7 +14,7 @@ pub struct Task{
 pub mod add_task;
 pub mod api;
 pub mod last_task;
-
+pub mod update_task;
 
 pub async fn get_user_tasks_coll(email: &str)->Collection<Task>{
     let db = connect("tasks_todo").await;
