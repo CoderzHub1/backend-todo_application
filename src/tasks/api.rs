@@ -1,3 +1,5 @@
+use std::cmp::{max};
+
 use axum::{Json, extract::State};
 use serde::{Deserialize, Serialize};
 use crate::{AppState, tasks::{Task, add_task::{TaskToAdd, add_task}, get_tasks::get_tasks, update_task::update_task}};
@@ -57,8 +59,7 @@ pub struct ResultGetTasks{
 }
 
 pub async fn get_tasks_api(State(state): State<AppState>, Json(payload): Json<GetTasks>)->Json<ResultGetTasks>{
-    let res = get_tasks(payload.email, state, payload.counter).await;
-
+    let res = get_tasks(payload.email, state, max(5, payload.counter)).await;
     match res{
         Ok(tasks)=>{
             return Json(ResultGetTasks { res: true, tasks:Some(tasks) });
