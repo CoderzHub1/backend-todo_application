@@ -1,5 +1,5 @@
 use axum::{Router, routing};
-use my_api::{AppState, initialize_db::{connect_db::connect, setup_validation::get_users_coll}, tasks::{self, api}, user::{add_user::create_user, auth_user::auth_user, get_user::get_user}};
+use my_api::{AppState, initialize_db::{connect_db::connect, setup_validation::get_users_coll}, tasks::{self, api::{self, get_tasks_api}}, user::{add_user::create_user, auth_user::auth_user, get_user::get_user}};
 use tower_http::cors::CorsLayer;
 
 #[tokio::main]
@@ -18,6 +18,7 @@ async fn main(){
     .route("/auth", routing::post(auth_user))
     .route("/add-task", routing::post(tasks::api::add_task_api))
     .route("/update-task", routing::post(api::udpate_task_api))
+    .route("/get-tasks", routing::get(get_tasks_api))
     .with_state(state)
     .layer(CorsLayer::permissive());
     

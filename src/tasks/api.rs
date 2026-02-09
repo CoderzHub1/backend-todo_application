@@ -1,6 +1,6 @@
 use axum::{Json, extract::State};
 use serde::{Deserialize, Serialize};
-use crate::{AppState, tasks::{add_task::{TaskToAdd, add_task}, update_task::update_task}};
+use crate::{AppState, tasks::{Task, add_task::{TaskToAdd, add_task}, get_tasks::get_tasks, update_task::update_task}};
 
 
 // ----- Add Task API
@@ -37,4 +37,36 @@ pub async fn udpate_task_api(State(state): State<AppState>, Json(payload):Json<T
             return Json(Res { success: false });
         }
     }
+}
+
+
+
+// ---- Get tasks API
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetTasks{
+    email: String,
+    counter: u16
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ResultGetTasks{
+    pub res: bool,
+    pub tasks: Option<Vec<Task>>,    
+}
+
+pub async fn get_tasks_api(State(state): State<AppState>, Json(payload): Json<GetTasks>)->Json<ResultGetTasks>{
+    let res = get_tasks(payload.email, state, payload.counter).await;
+
+    match res{
+        Ok(tasks)=>{
+            return Json(ResultGetTasks { res: true, tasks:Some(tasks) });
+        }
+        Err(x)=>{
+            eprintln!("{}",x);
+            return Json(ResultGetTasks { res: false, tasks: None });
+        }
+    }
+
 }
