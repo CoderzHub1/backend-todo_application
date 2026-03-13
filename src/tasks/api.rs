@@ -96,7 +96,7 @@ pub struct TaskRemovalPayload {
     pub task_id: u32,
 }
 
-pub async fn TaskRemovalAPI(
+pub async fn task_removal_api(
     State(state): State<AppState>,
     Json(payload): Json<TaskRemovalPayload>,
 ) -> impl IntoResponse {
