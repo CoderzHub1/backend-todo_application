@@ -18,6 +18,7 @@ async fn main() {
     let state = AppState {
         users_coll,
         tasks_db,
+        jwt_secret: String::from("my_jwt_secret123")
     };
 
     let app = Router::new()

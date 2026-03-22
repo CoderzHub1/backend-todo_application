@@ -9,5 +9,6 @@ pub mod user;
 #[derive(Clone)]
 pub struct AppState{
     pub users_coll: Collection<User>,
-    pub tasks_db: Database
+    pub tasks_db: Database,
+    pub jwt_secret: String,
 }
