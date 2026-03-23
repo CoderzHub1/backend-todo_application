@@ -2,7 +2,7 @@ use axum::{Json, extract::State};
 use mongodb::bson::doc;
 use serde::{Deserialize, Serialize};
 
-use crate::{AppState, user::{check_user_access::check_user_access, create_jwt::{self, create_jwt}}};
+use crate::{AppState, user::{check_user_access::check_user_access, jwt::{create_jwt}}};
 
 #[derive(Serialize, Deserialize)]
 pub struct UserAuth {
@@ -18,7 +18,7 @@ pub struct Res {
     jwt: Option<String>,
 }
 
-pub async fn auth_user(State(state): State<AppState>, Json(payload): Json<UserAuth>)-> Json<Res>{
+pub async fn auth_user_pass(State(state): State<AppState>, Json(payload): Json<UserAuth>)-> Json<Res>{
     let auth = match check_user_access(&payload.email, &payload.pass, state.users_coll).await {
         Ok(val)=> val,
         Err(x)=>{

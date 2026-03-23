@@ -6,7 +6,7 @@ use my_api::{
         self,
         api::{self, get_tasks_api, task_removal_api},
     },
-    user::{add_user::create_user, auth_user::auth_user, get_user::get_user},
+    user::{add_user::create_user, auth_user_jwt::auth_user_jwt, auth_user_pass::auth_user_pass, get_user::get_user},
 };
 use tower_http::cors::CorsLayer;
 
@@ -24,11 +24,12 @@ async fn main() {
     let app = Router::new()
         .route("/get-user", routing::get(get_user))
         .route("/create-user", routing::post(create_user))
-        .route("/auth", routing::post(auth_user))
+        .route("/auth", routing::post(auth_user_pass))
         .route("/add-task", routing::post(tasks::api::add_task_api))
         .route("/update-task", routing::post(api::udpate_task_api))
         .route("/get-tasks", routing::get(get_tasks_api))
         .route("/delete-task", routing::post(task_removal_api))
+        .route("/jwt-auth", routing::post(auth_user_jwt))
         .with_state(state)
         .layer(CorsLayer::permissive());
 
