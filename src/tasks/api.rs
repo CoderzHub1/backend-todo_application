@@ -18,8 +18,14 @@ use serde::{Deserialize, Serialize};
 pub async fn add_task_api(
     State(state): State<AppState>,
     Json(payload): Json<TaskToAdd>,
-) -> Json<Option<bool>> {
-    let res: Option<bool> = add_task(state, payload).await.ok();
+) -> Json<bool> {
+    let res = match add_task(state, payload).await {
+        Ok(val)=>val,
+        Err(x)=>{
+            eprintln!("Error while adding task: {}", {x} ); 
+            false
+        }
+    };
     Json(res)
 }
 // ----- Task Update API
