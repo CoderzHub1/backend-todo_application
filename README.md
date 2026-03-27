@@ -7,7 +7,8 @@ A RESTful API backend for a todo application built with **Rust** using the **Axu
 - **Framework**: Axum 0.8.8
 - **Runtime**: Tokio
 - **Database**: MongoDB 3.5.0
-- **Authentication**: Bcrypt for password hashing
+- **Authentication**: Bcrypt for password hashing + JWT tokens
+- **JWT Library**: jsonwebtoken 10.3.0
 - **Language**: Rust 2024 Edition
 
 ## Server Configuration
@@ -87,7 +88,7 @@ GET /get-user?email=john@example.com
 
 #### 3. Authenticate User
 
-Authenticates a user with email and password.
+Authenticates a user with email and password. Returns a JWT token on successful authentication.
 
 **Endpoint**: `POST /auth`
 
@@ -103,7 +104,8 @@ Authenticates a user with email and password.
 ```json
 {
   "auth": true,
-  "error": false
+  "error": false,
+  "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
@@ -111,7 +113,8 @@ Authenticates a user with email and password.
 ```json
 {
   "auth": false,
-  "error": false
+  "error": true,
+  "jwt": null
 }
 ```
 
@@ -119,7 +122,8 @@ Authenticates a user with email and password.
 ```json
 {
   "auth": false,
-  "error": false
+  "error": true,
+  "jwt": null
 }
 ```
 
@@ -127,7 +131,39 @@ Authenticates a user with email and password.
 ```json
 {
   "auth": false,
-  "error": true
+  "error": true,
+  "jwt": null
+}
+```
+
+---
+
+#### 4. Verify JWT Token
+
+Verifies if a JWT token is valid and returns the claims if not tampered with.
+
+**Endpoint**: `POST /jwt-auth`
+
+**Request Body**:
+```json
+{
+  "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Response (Valid Token)**:
+```json
+{
+  "email": "john@example.com",
+  "tampered": false
+}
+```
+
+**Response (Invalid/Tampered Token)**:
+```json
+{
+  "email": null,
+  "tampered": true
 }
 ```
 
@@ -135,9 +171,9 @@ Authenticates a user with email and password.
 
 ### Task Management
 
-#### 4. Add Task
+#### 5. Add Task
 
-Creates a new task for an authenticated user.
+Creates a new task for an authenticated user using a JWT token.
 
 **Endpoint**: `POST /add-task`
 
@@ -146,8 +182,7 @@ Creates a new task for an authenticated user.
 {
   "name": "Complete project documentation",
   "priority": 1,
-  "email": "john@example.com",
-  "auth_pass": "securePassword123"
+  "auth_jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
@@ -173,9 +208,9 @@ false
 
 ---
 
-#### 5. Get Tasks
+#### 6. Get Tasks
 
-Retrieves tasks for an authenticated user with pagination.
+Retrieves tasks for a user with pagination. The `counter` parameter specifies the maximum number of tasks to retrieve (minimum of 5).
 
 **Endpoint**: `GET /get-tasks`
 
@@ -191,7 +226,7 @@ Retrieves tasks for an authenticated user with pagination.
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `email` | string | User's email address |
-| `counter` | integer | Maximum number of tasks to retrieve |
+| `counter` | integer | Maximum number of tasks to retrieve (minimum 5) |
 
 **Response (Success)**:
 ```json
@@ -224,7 +259,7 @@ Retrieves tasks for an authenticated user with pagination.
 
 ---
 
-#### 6. Update Task
+#### 7. Update Task
 
 Marks a task as complete (updates status to true).
 
@@ -260,6 +295,42 @@ Marks a task as complete (updates status to true).
 
 ---
 
+#### 8. Delete Task
+
+Deletes a task for an authenticated user.
+
+**Endpoint**: `POST /delete-task`
+
+**Request Body**:
+```json
+{
+  "email": "john@example.com",
+  "auth_pass": "securePassword123",
+  "task_id": 1
+}
+```
+
+**Parameters**:
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `email` | string | User's email address |
+| `auth_pass` | string | User's password for verification |
+| `task_id` | integer | Task ID to delete |
+
+**Response (Success)**:
+```json
+{
+  "success": true
+}
+```
+
+**Response (Failure)**:
+```json
+{
+  "success": false
+}
+```
+
 ## Data Models
 
 ### User
@@ -290,20 +361,28 @@ Marks a task as complete (updates status to true).
 - **MongoDB Tasks**: `todo_tasks` database
   - Collection: One per user (identified by email)
 
-## Error Handling
-
-The API provides error responses with descriptive messages:
-- **400 Bad Request**: Invalid request body or missing required fields
-- **500 Internal Server Error**: Database or server-side errors
-
-Errors are logged to stderr with detailed information for debugging.
-
 ## Authentication Flow
 
+### Password-Based Authentication (Legacy)
+
 1. User creates an account via `/create-user`
-2. User authenticates via `/auth` endpoint
-3. User includes `auth_pass` field in requests that require authentication (add-task, update-task, get-tasks)
-4. Backend verifies credentials using bcrypt password verification
+2. User authenticates via `/auth` endpoint with email and password
+3. Backend verifies credentials using bcrypt password verification
+4. Upon success, a JWT token is returned
+
+### JWT-Based Authentication
+
+1. User obtains a JWT token by authenticating via `/auth` endpoint
+2. User includes the JWT token in the `auth_jwt` field for protected endpoints (e.g., `/add-task`)
+3. Backend verifies JWT token signature and claims
+4. User can verify JWT token validity using `/jwt-auth` endpoint
+
+### Task Operations
+
+- For `/add-task`: Include `auth_jwt` from the `/auth` response
+- For `/delete-task`: Include original email and password for authentication
+- For `/update-task`: Only requires email address
+- For `/get-tasks`: Only requires email address
 
 ## Running the Server
 
@@ -323,9 +402,11 @@ The API uses a permissive CORS policy, allowing requests from any origin. Modify
 ## Development Notes
 
 - Passwords are hashed using bcrypt with a cost factor of 12 (DEFAULT_COST)
+- JWT tokens are generated using HS256 algorithm with a configurable secret key (defaults to "my_jwt_secret123")
 - All API endpoints return JSON responses
 - Database operations use MongoDB drivers with async/await pattern
 - The application uses Tokio for async runtime
+- JWT tokens contain user email in the claims and can be verified without database access
 
 
-`Note: this readme.md is AI generated but the the details contained are correct`
+`Note: this readme.md is AI generated but the the details contained about the usage of the API are checked and are completely correct`
