@@ -62,7 +62,7 @@ pub async fn udpate_task_api(
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GetTasks {
-    email: String,
+    auth_jwt: String,
     counter: u16,
 }
 
@@ -76,7 +76,7 @@ pub async fn get_tasks_api(
     State(state): State<AppState>,
     Json(payload): Json<GetTasks>,
 ) -> Json<ResultGetTasks> {
-    let res = get_tasks(payload.email, state, max(5, payload.counter)).await;
+    let res = get_tasks(payload.auth_jwt, state, max(5, payload.counter)).await;
     match res {
         Ok(tasks) => {
             return Json(ResultGetTasks {

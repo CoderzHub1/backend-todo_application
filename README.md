@@ -210,14 +210,14 @@ false
 
 #### 6. Get Tasks
 
-Retrieves tasks for a user with pagination. The `counter` parameter specifies the maximum number of tasks to retrieve (minimum of 5).
+Retrieves tasks for an authenticated user with pagination. The `counter` parameter specifies the maximum number of tasks to retrieve (minimum of 5).
 
 **Endpoint**: `GET /get-tasks`
 
 **Request Body**:
 ```json
 {
-  "email": "john@example.com",
+  "auth_jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "counter": 10
 }
 ```
@@ -225,7 +225,7 @@ Retrieves tasks for a user with pagination. The `counter` parameter specifies th
 **Parameters**:
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `email` | string | User's email address |
+| `auth_jwt` | string | Valid JWT token received from `/auth` |
 | `counter` | integer | Maximum number of tasks to retrieve (minimum 5) |
 
 **Response (Success)**:
@@ -382,7 +382,7 @@ Deletes a task for an authenticated user.
 - For `/add-task`: Include `auth_jwt` from the `/auth` response
 - For `/delete-task`: Include original email and password for authentication
 - For `/update-task`: Only requires email address
-- For `/get-tasks`: Only requires email address
+- For `/get-tasks`: Include `auth_jwt` from the `/auth` response
 
 ## Running the Server
 

@@ -1,4 +1,4 @@
-use crate::{AppState, tasks::{Task, last_task::get_last_task_id}, user::{check_user_access::check_user_access, jwt}};
+use crate::{AppState, tasks::{Task, last_task::get_last_task_id}, user::{jwt}};
 use mongodb::bson::doc;
 use serde::{Deserialize, Serialize};
 use std::{error::Error};

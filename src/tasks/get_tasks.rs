@@ -1,16 +1,15 @@
+use std::error::Error;
 use mongodb::bson::doc;
+use crate::{AppState, tasks::Task, user::jwt::verify_jwt};
 
-use crate::{AppState, tasks::Task};
+pub async fn get_tasks(auth_jwt: String, state: AppState, counter: u16) -> Result<Vec<Task>,Box<dyn Error>> { 
+    
+    let user_data = verify_jwt(&auth_jwt, &state.jwt_secret).await?;
 
-pub async fn get_tasks(
-    email: String,
-    state: AppState,
-    counter: u16,
-) -> Result<Vec<Task>, mongodb::error::Error> {
-    let coll: mongodb::Collection<Task> = state.tasks_db.collection(&email);
+    let coll: mongodb::Collection<Task> = state.tasks_db.collection(&user_data.claims.email);
     let mut res = coll.find(doc! {}).await?;
     let mut tasks: Vec<Task> = vec![];
-    let mut iterations = 0;
+    let mut iterations:u16 = 0;
     while res.advance().await? {
         let task = res.deserialize_current()?;
         tasks.push(task);
@@ -21,4 +20,5 @@ pub async fn get_tasks(
         }
     }
     return Ok(tasks);
+
 }
