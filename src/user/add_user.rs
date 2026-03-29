@@ -53,7 +53,6 @@ pub async fn create_user(State(state): State<AppState>, Json(payload): Json<User
     let success = coll.insert_one(&user).await;
     match success {
         Ok(_x)=>{
-            println!("User added successfully\n{:#?}", user);
             return Json(Status{status: String::from("Success")});
         }
         Err(_x)=>{

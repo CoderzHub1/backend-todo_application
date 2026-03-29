@@ -12,7 +12,7 @@ pub struct TaskToAdd {
 
 pub async fn add_task(state: AppState, payload: TaskToAdd) -> Result<bool, Box<dyn Error>> {
     let user_data = jwt::verify_jwt(&payload.auth_jwt, &state.jwt_secret).await?;
-    println!("{:#?}", user_data);
+
     let user: Option<crate::user::add_user::User> = state
         .users_coll
         .find_one(doc! {"email": user_data.claims.email})
@@ -33,7 +33,7 @@ pub async fn add_task(state: AppState, payload: TaskToAdd) -> Result<bool, Box<d
                 status: false,
                 priority: payload.priority
             };
-            println!("{:#?}", new_task);
+
            let _status = coll
                 .insert_one(new_task)
                 .await?;

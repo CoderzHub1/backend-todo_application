@@ -321,34 +321,32 @@ def run_smoke_test(client: ApiClient) -> None:
         "/update-task",
         {
             "id": first_task_id,
-            "email": email,
+            "auth_jwt": jwt,
         },
     )
     _assert(status == 200, f"/update-task expected HTTP 200, got {status}, body={body}")
     _assert(body.get("success") is True, f"/update-task expected success=true, got {body}")
     _ok("Task updated")
 
-    _step("Delete task with wrong password (negative test)")
+    _step("Delete task with invalid JWT (negative test)")
     status, body = client.request_json(
         "POST",
         "/delete-task",
         {
-            "email": email,
-            "auth_pass": f"{password}_wrong",
+            "auth_jwt": f"{jwt}.broken",
             "task_id": first_task_id,
         },
     )
-    _assert(status == 200, f"/delete-task (wrong pass) expected HTTP 200, got {status}, body={body}")
-    _assert(body.get("success") is False, f"/delete-task (wrong pass) should fail: body={body}")
-    _ok("Wrong-password delete rejected")
+    _assert(status == 500, f"/delete-task (invalid jwt) expected HTTP 500, got {status}, body={body}")
+    _assert(body.get("success") is False, f"/delete-task (invalid jwt) should fail: body={body}")
+    _ok("Invalid-JWT delete rejected")
 
-    _step("Delete task with correct password")
+    _step("Delete task with valid JWT")
     status, body = client.request_json(
         "POST",
         "/delete-task",
         {
-            "email": email,
-            "auth_pass": password,
+            "auth_jwt": jwt,
             "task_id": first_task_id,
         },
     )

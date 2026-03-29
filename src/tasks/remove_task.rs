@@ -1,21 +1,18 @@
 use mongodb::bson::doc;
 
-use crate::{AppState, tasks::Task, user::check_user_access::check_user_access};
+use crate::{AppState, tasks::Task, user::{jwt::verify_jwt}};
 
-pub async fn remove_task(email: String, auth_pass: String, id: u32, state:AppState)-> Result<bool, Box<dyn std::error::Error>> {
-    let user = state.users_coll.find_one(doc! {"email": &email}).await?;
+pub async fn remove_task(auth_jwt: &String, id: u32, state:AppState)-> Result<bool, Box<dyn std::error::Error>> {
+    
+    let user_data = verify_jwt(&auth_jwt, &state.jwt_secret).await?;
+
+    let user = state.users_coll.find_one(doc! {"email": &user_data.claims.email}).await?;
 
     match user {
         Some(_x)=>{
-            if check_user_access(&email, &auth_pass, state.users_coll).await?  != true {
-                Ok(false)
-            }
-            else {
-                let coll:mongodb::Collection<Task> = state.tasks_db.collection(&email);
-                let res = coll.find_one_and_delete(doc! {"id": &id}).await?;
-                println!("Deleted document: {:#?}", res);
-                Ok(true)
-            }
+            let coll:mongodb::Collection<Task> = state.tasks_db.collection(&user_data.claims.email);
+            let _res = coll.find_one_and_delete(doc! {"id": &id}).await?;
+            Ok(true)
         }
         None=>{
             Ok(false)

@@ -12,10 +12,7 @@ pub struct CensoredUser{
     pub email: String
 }
 #[axum::debug_handler]
-pub async fn get_user(
-    State(state): State<AppState>, 
-    Query(params): Query<HashMap<String, String>> 
-)->Json<CensoredUser>{
+pub async fn get_user( State(state): State<AppState>, Query(params): Query<HashMap<String, String>> ) -> Json<CensoredUser> {
     let check_email = params.get("email");
     match check_email{
         Some(email)=>{

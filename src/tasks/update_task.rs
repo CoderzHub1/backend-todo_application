@@ -13,12 +13,11 @@ pub async fn update_task(id:u32, coll: Collection<Task>)->Result<bool, Box<dyn s
     let res: Option<Task> = coll.find_one_and_update(filter, update).await?;
 
     match res{
-        Some(x)=>{
-            println!("{:#?}", x);
-            Ok(true)
+        Some(_x)=>{
+            return Ok(true);
         }
         None=>{
-            Ok(false)
+            return Ok(false);
         }
     }
 }

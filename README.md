@@ -269,7 +269,7 @@ Marks a task as complete (updates status to true).
 ```json
 {
   "id": 1,
-  "email": "john@example.com"
+  "auth_jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
@@ -277,7 +277,7 @@ Marks a task as complete (updates status to true).
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `id` | integer | Task ID to update |
-| `email` | string | User's email address |
+| `auth_jwt` | string | Valid JWT token received from `/auth` |
 
 **Response (Success)**:
 ```json
@@ -304,8 +304,7 @@ Deletes a task for an authenticated user.
 **Request Body**:
 ```json
 {
-  "email": "john@example.com",
-  "auth_pass": "securePassword123",
+  "auth_jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "task_id": 1
 }
 ```
@@ -313,8 +312,7 @@ Deletes a task for an authenticated user.
 **Parameters**:
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `email` | string | User's email address |
-| `auth_pass` | string | User's password for verification |
+| `auth_jwt` | string | Valid JWT token received from `/auth` |
 | `task_id` | integer | Task ID to delete |
 
 **Response (Success)**:
@@ -380,8 +378,8 @@ Deletes a task for an authenticated user.
 ### Task Operations
 
 - For `/add-task`: Include `auth_jwt` from the `/auth` response
-- For `/delete-task`: Include original email and password for authentication
-- For `/update-task`: Only requires email address
+- For `/delete-task`: Include `auth_jwt` from the `/auth` response
+- For `/update-task`: Include `auth_jwt` from the `/auth` response
 - For `/get-tasks`: Include `auth_jwt` from the `/auth` response
 
 ## Running the Server
@@ -393,6 +391,20 @@ cargo run --release
 The server will start on `http://0.0.0.0:5050` and output:
 ```
 Server is now running on http://localhost:5050
+```
+
+## Testing the Server
+
+You can run an automated integration test against the backend API using the provided Python script. It verifies user creation, authentication, and task operations.
+
+To automatically start the backend server and run the tests:
+```bash
+python3 test/api_smoke_test.py --start-server
+```
+
+If your server is already running, you can run the test script directly against it:
+```bash
+python3 test/api_smoke_test.py
 ```
 
 ## CORS Policy
