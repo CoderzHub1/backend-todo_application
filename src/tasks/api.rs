@@ -7,7 +7,7 @@ use crate::{
         add_task::{TaskToAdd, add_task},
         get_tasks::get_tasks,
         remove_task::remove_task,
-        update_task::update_task,
+        update_task::toggle_task_state,
     }, user::jwt::verify_jwt,
 };
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
@@ -54,7 +54,7 @@ pub async fn udpate_task_api(
 
 
     let coll: mongodb::Collection<super::Task> = state.tasks_db.collection(&user.claims.email);
-    let res = update_task(payload.id, coll).await;
+    let res = toggle_task_state(payload.id, coll).await;
 
     match res {
         Ok(val) => {

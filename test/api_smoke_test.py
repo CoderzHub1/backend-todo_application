@@ -208,6 +208,13 @@ def _ok(name: str) -> None:
     print(f"{_colorize('[PASS]', Ansi.GREEN, USE_COLOR)} {name}")
 
 
+def _get_task_by_id(tasks: list[dict[str, Any]], task_id: int) -> dict[str, Any]:
+    for task in tasks:
+        if task.get("id") == task_id:
+            return task
+    raise TestFailure(f"Task id={task_id} not found in tasks payload: {tasks}")
+
+
 def run_smoke_test(client: ApiClient) -> None:
     suffix = f"{int(time.time())}_{_rand(6)}"
     username = f"test_user_{suffix}"
@@ -314,8 +321,11 @@ def run_smoke_test(client: ApiClient) -> None:
     _assert("id" in first_task and "name" in first_task, f"Unexpected task shape: {first_task}")
     _ok("Tasks fetched")
 
-    _step("Update first task by id")
     first_task_id = first_task["id"]
+    initial_status = first_task.get("status")
+    _assert(isinstance(initial_status, bool), f"Task status should be bool: {first_task}")
+
+    _step("Toggle first task status by id")
     status, body = client.request_json(
         "POST",
         "/update-task",
@@ -326,7 +336,79 @@ def run_smoke_test(client: ApiClient) -> None:
     )
     _assert(status == 200, f"/update-task expected HTTP 200, got {status}, body={body}")
     _assert(body.get("success") is True, f"/update-task expected success=true, got {body}")
-    _ok("Task updated")
+    _ok("Task status toggled once")
+
+    _step("Verify first toggle changed task status")
+    status, body = client.request_json(
+        "GET",
+        "/get-tasks",
+        {
+            "auth_jwt": jwt,
+            "counter": 10,
+        },
+    )
+    _assert(status == 200, f"/get-tasks (after 1st toggle) expected HTTP 200, got {status}, body={body}")
+    _assert(body.get("res") is True, f"/get-tasks (after 1st toggle) should return res=true: body={body}")
+    tasks = body.get("tasks")
+    _assert(isinstance(tasks, list), f"/get-tasks (after 1st toggle) tasks should be list: body={body}")
+    toggled_task = _get_task_by_id(tasks, first_task_id)
+    _assert(
+        toggled_task.get("status") is (not initial_status),
+        f"/update-task should toggle status from {initial_status} to {not initial_status}, got {toggled_task}",
+    )
+    _ok("First toggle verified")
+
+    _step("Toggle first task status back to original value")
+    status, body = client.request_json(
+        "POST",
+        "/update-task",
+        {
+            "id": first_task_id,
+            "auth_jwt": jwt,
+        },
+    )
+    _assert(status == 200, f"/update-task (2nd toggle) expected HTTP 200, got {status}, body={body}")
+    _assert(body.get("success") is True, f"/update-task (2nd toggle) expected success=true, got {body}")
+    _ok("Task status toggled twice")
+
+    _step("Verify second toggle restored original task status")
+    status, body = client.request_json(
+        "GET",
+        "/get-tasks",
+        {
+            "auth_jwt": jwt,
+            "counter": 10,
+        },
+    )
+    _assert(status == 200, f"/get-tasks (after 2nd toggle) expected HTTP 200, got {status}, body={body}")
+    _assert(body.get("res") is True, f"/get-tasks (after 2nd toggle) should return res=true: body={body}")
+    tasks = body.get("tasks")
+    _assert(isinstance(tasks, list), f"/get-tasks (after 2nd toggle) tasks should be list: body={body}")
+    toggled_back_task = _get_task_by_id(tasks, first_task_id)
+    _assert(
+        toggled_back_task.get("status") is initial_status,
+        f"/update-task second toggle should restore status={initial_status}, got {toggled_back_task}",
+    )
+    _ok("Second toggle verified")
+
+    _step("Update unknown task id (negative test)")
+    status, body = client.request_json(
+        "POST",
+        "/update-task",
+        {
+            "id": first_task_id + 10_000_000,
+            "auth_jwt": jwt,
+        },
+    )
+    _assert(
+        status == 500,
+        f"/update-task (unknown task id) expected HTTP 500, got {status}, body={body}",
+    )
+    _assert(
+        body.get("success") is False,
+        f"/update-task (unknown task id) should return success=false, got {body}",
+    )
+    _ok("Unknown task id rejected")
 
     _step("Delete task with invalid JWT (negative test)")
     status, body = client.request_json(

@@ -261,7 +261,7 @@ Retrieves tasks for an authenticated user with pagination. The `counter` paramet
 
 #### 7. Update Task
 
-Marks a task as complete (updates status to true).
+Toggles a task's completion status (each call flips `status` between `true` and `false`).
 
 **Endpoint**: `POST /update-task`
 
@@ -292,6 +292,11 @@ Marks a task as complete (updates status to true).
   "success": false
 }
 ```
+
+**Behavior Notes**:
+- If the task is currently incomplete (`status: false`), calling `/update-task` changes it to complete (`status: true`).
+- If the task is currently complete (`status: true`), calling `/update-task` changes it back to incomplete (`status: false`).
+- If the task ID does not exist for the user, the API returns failure.
 
 ---
 
@@ -395,7 +400,7 @@ Server is now running on http://localhost:5050
 
 ## Testing the Server
 
-You can run an automated integration test against the backend API using the provided Python script. It verifies user creation, authentication, and task operations.
+You can run an automated integration test against the backend API using the provided Python script. It verifies user creation, authentication, task operations, and task-status toggling behavior.
 
 To automatically start the backend server and run the tests:
 ```bash
