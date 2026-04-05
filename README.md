@@ -400,17 +400,21 @@ Server is now running on http://localhost:5050
 
 ## Testing the Server
 
-You can run an automated integration test against the backend API using the provided Python script. It verifies user creation, authentication, task operations, and task-status toggling behavior.
+You can run an automated integration test against the backend API using the provided Bun/JavaScript script. It verifies user creation, authentication, task operations, and task-status toggling behavior.
 
 To automatically start the backend server and run the tests:
 ```bash
-python3 test/api_smoke_test.py --start-server
+bun test/api_smoke_test.js --start-server
 ```
 
 If your server is already running, you can run the test script directly against it:
 ```bash
-python3 test/api_smoke_test.py
+bun test/api_smoke_test.js
 ```
+
+Optional flags:
+- `-d` / `--debug` to print request and response JSON
+- `--base-url <url>` to target a custom API URL
 
 ## CORS Policy
 
